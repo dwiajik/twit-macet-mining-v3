@@ -1,0 +1,25 @@
+dr,dari
+sp,simpang
+simp,simpang
+bund,bundaran
+jl,jalan
+jln,jalan
+jlan,jalan
+lncar,lancar
+dg,dengan
+dgn,dengan
+tdk,tidak
+yg,yang
+tnpa,tanpa
+rame,ramai
+ramlan,ramai lancar
+deres,deras
+bgt,banget
+boplaz,borobudur plaza
+k,ke
+kend,kendaraan
+blm,belum
+concat,condongcatur
+jokteng,pojok beteng
+per3an,pertigaan
+per4an,perempatan
