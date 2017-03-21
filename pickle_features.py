@@ -1,11 +1,8 @@
 import csv
-import nltk
 import os
 import pickle
 import random
 import sys
-
-from sklearn.svm import LinearSVC
 
 from modules import cleaner, tokenizer
 
@@ -40,7 +37,5 @@ random.shuffle(labeled_tweets)
 
 train_set = [(tweet_features(tweet), category) for (tweet, category) in labeled_tweets]
 
-svm_classifier = nltk.classify.SklearnClassifier(LinearSVC(max_iter=10000)).train(train_set)
-
 with open(sys.argv[2], 'wb') as output:
-    pickle.dump(svm_classifier, output, pickle.HIGHEST_PROTOCOL)
+    pickle.dump(train_set, output, pickle.HIGHEST_PROTOCOL)
