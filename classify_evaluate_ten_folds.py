@@ -1,11 +1,12 @@
 import collections
+import csv
 import datetime
 import json
 import os
 import random
 import re
 import sys
-import time
+import time as t
 
 import nltk
 import nltk.classify
@@ -70,9 +71,9 @@ for i in range(fold):
     print('Test data:', len(test_set), 'data')
 
     # SVM
-    start_time = time.time()
+    start_time = t.time()
     svm_classifier = nltk.classify.SklearnClassifier(LinearSVC(max_iter=10000)).train(train_set)
-    time = round(time.time() - start_time, 2)
+    time = round(t.time() - start_time, 2)
     accuracy = nltk.classify.accuracy(svm_classifier, test_set)
      
     true_positive = 0
