@@ -3,6 +3,7 @@ import nltk
 import os
 import pickle
 import random
+import resource
 import sys
 
 from sklearn.svm import LinearSVC
@@ -44,3 +45,5 @@ svm_classifier = nltk.classify.SklearnClassifier(LinearSVC(max_iter=10000)).trai
 
 with open(sys.argv[2], 'wb') as output:
     pickle.dump(svm_classifier, output, pickle.HIGHEST_PROTOCOL)
+
+print(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
