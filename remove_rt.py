@@ -1,3 +1,8 @@
+'''
+We define calculation, ngrams, and threshold on the top. Then the script will strip out the
+similar tweets. The output will be list of tweets (containing (tweet, category, tokens)) without retweet.
+'''
+
 import csv
 import os
 

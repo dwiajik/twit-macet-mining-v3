@@ -1,3 +1,8 @@
+'''
+This file is used to pickle model of dataset. The output will be a pickled file that can
+be loaded as classifier.
+'''
+
 import csv
 import nltk
 import os

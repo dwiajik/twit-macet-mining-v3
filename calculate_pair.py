@@ -1,3 +1,8 @@
+'''
+This script is used to calculate similarity index (Cosine, Dice, Jaccard, Overlap, LCS) of tweets dataset,
+producing file containing list of tweets together with their similarity indices.
+'''
+
 import argparse
 import csv
 from datetime import datetime, timedelta

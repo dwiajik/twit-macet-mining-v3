@@ -1,3 +1,8 @@
+'''
+This file is used to pickle features of dataset. The output will be a pickled file that can
+be used as input to train classifier.
+'''
+
 import csv
 import os
 import pickle

@@ -1,3 +1,7 @@
+'''
+This script is intended to evaluate dataset using SVM and 10-folds cross validation
+'''
+
 import collections
 import csv
 import datetime
@@ -29,11 +33,11 @@ def tweet_features(tweet):
 def f1(precision, recall):
     return 2 * ((precision * recall) / (precision + recall))
 
-with open(os.path.join(os.path.dirname(__file__), 'distinct_traffic_tweets.csv'), newline='\n') as csv_input:
+with open(os.path.join(os.path.dirname(__file__), 'tweets_corpus/clean/distinct_traffic_tweets.csv'), newline='\n') as csv_input:
     dataset = csv.reader(csv_input, delimiter=',', quotechar='"')
     traffic_tweets = [(line[0], line[1]) for line in dataset]
 
-with open(os.path.join(os.path.dirname(__file__), 'distinct_non_traffic_tweets.csv'), newline='\n') as csv_input:
+with open(os.path.join(os.path.dirname(__file__), 'tweets_corpus/clean/distinct_non_traffic_tweets.csv'), newline='\n') as csv_input:
     dataset = csv.reader(csv_input, delimiter=',', quotechar='"')
     non_traffic_tweets = [(line[0], line[1]) for line in dataset]
 

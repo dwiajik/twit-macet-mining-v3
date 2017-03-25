@@ -1,3 +1,9 @@
+'''
+This script is intended to evaluate the accuracy of similarity index.
+Input: 2 files (different dataset & similar dataset) with: time, tweet, time2, tweet2, scores.
+Output: file and stdout containing threshold, calculation, and accuracy.
+'''
+
 import argparse
 import csv
 import os
