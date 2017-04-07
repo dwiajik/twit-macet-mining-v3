@@ -1,6 +1,7 @@
 import csv
 from os.path import dirname, join
 from random import shuffle
+import time
 
 import numpy as np
 from sklearn.feature_extraction.text import CountVectorizer
@@ -12,11 +13,11 @@ from modules.cleaner import clean
 categories = ['traffic', 'non_traffic']
 count_vect = CountVectorizer(preprocessor=clean)
 
-with open(join(dirname(__file__), 'result/generated_datasets/cosine/0.5/traffic.csv'), newline='\n') as csv_input:
+with open(join(dirname(__file__), 'result/generated_datasets/traffic.csv'), newline='\n') as csv_input:
     dataset = csv.reader(csv_input, delimiter=',', quotechar='"')
     traffic_tweets = [line[0] for line in dataset]
 
-with open(join(dirname(__file__), 'result/generated_datasets/cosine/0.5/non_traffic.csv'), newline='\n') as csv_input:
+with open(join(dirname(__file__), 'result/generated_datasets/non_traffic.csv'), newline='\n') as csv_input:
     dataset = csv.reader(csv_input, delimiter=',', quotechar='"')
     non_traffic_tweets = [line[0] for line in dataset]
 
@@ -26,7 +27,7 @@ with open(join(dirname(__file__), 'tweets_corpus/test_set_10000.csv'), newline='
     shuffle(dataset)
     test = {
         'data': [line[0] for line in dataset],
-        'target': [categories.index(line[1]) for line in dataset]
+        'target': [categories.index(line[1]) for line in dataset],
     }
 
 tweets = {
@@ -39,13 +40,18 @@ training_vectors = count_vect.fit_transform(tweets['data'])
 # print(training_vectors.shape)
 # print(len(tweets['target']))
 
+start_time = time.time()
 clf = LinearSVC(max_iter=10000).fit(training_vectors, tweets['target'])
+training_time = round(time.time() - start_time, 2)
+
 test_vectors = count_vect.transform(test['data'])
 
 predicted = clf.predict(test_vectors)
 accuracy = np.mean(predicted == test['target'])
 
 prfs = precision_recall_fscore_support(test['target'], predicted)
+
+print('Training time: {}'.format(training_time))
 print('Accuracy: {}'.format(accuracy))
 print('Precision: {}'.format(prfs[0][0]))
 print('Recall: {}'.format(prfs[1][0]))
