@@ -25,16 +25,16 @@ def tweet_features(tweet):
     return features
 
 if sys.argv[1] == 'original':
-    traffic_tweets = [(line, 'traffic') for line in open('tweets_corpus/traffic_tweets_combined.txt')]
-    non_traffic_tweets = [(line, 'non_traffic') for line in open('tweets_corpus/random_tweets.txt')] + \
-        [(line, 'non_traffic') for line in open('tweets_corpus/non_traffic_tweets.txt')]
+    traffic_tweets = [(line, 'traffic') for line in open('tweets_corpus/raw/traffic_tweets_combined.txt')]
+    non_traffic_tweets = [(line, 'non_traffic') for line in open('tweets_corpus/raw/random_tweets.txt')] + \
+        [(line, 'non_traffic') for line in open('tweets_corpus/raw/non_traffic_tweets.txt')]
 
-elif sys.argv[1] == 'clean':
-    with open(os.path.join(os.path.dirname(__file__), 'distinct_traffic_tweets.csv'), newline='\n') as csv_input:
+else:
+    with open(os.path.join(os.path.dirname(__file__), 'result/generated_datasets/{}/{}/traffic.csv'.format(sys.argv[1], sys.argv[2])), newline='\n') as csv_input:
         dataset = csv.reader(csv_input, delimiter=',', quotechar='"')
         traffic_tweets = [(line[0], line[1]) for line in dataset]
 
-    with open(os.path.join(os.path.dirname(__file__), 'distinct_non_traffic_tweets.csv'), newline='\n') as csv_input:
+    with open(os.path.join(os.path.dirname(__file__), 'result/generated_datasets/{}/{}/non_traffic.csv'.format(sys.argv[1], sys.argv[2])), newline='\n') as csv_input:
         dataset = csv.reader(csv_input, delimiter=',', quotechar='"')
         non_traffic_tweets = [(line[0], line[1]) for line in dataset]
 
@@ -48,7 +48,7 @@ train_set = [(tweet_features(tweet), category) for (tweet, category) in labeled_
 
 svm_classifier = nltk.classify.SklearnClassifier(LinearSVC(max_iter=10000)).train(train_set)
 
-with open(sys.argv[2], 'wb') as output:
-    pickle.dump(svm_classifier, output, pickle.HIGHEST_PROTOCOL)
+# with open(sys.argv[2], 'wb') as output:
+#     pickle.dump(svm_classifier, output, pickle.HIGHEST_PROTOCOL)
 
 print(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)

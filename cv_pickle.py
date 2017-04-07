@@ -1,5 +1,5 @@
 '''
-This script is intended to evaluate dataset using SVM and 10-folds cross validation
+This script is experimental. Intended to evaluate (10-folds cross validation) pickled model.
 '''
 
 import collections
@@ -7,19 +7,15 @@ import csv
 import datetime
 import json
 import os
+import pickle
 import random
 import re
 import sys
-import time as t
 
 import nltk
-import nltk.classify
-from nltk.metrics import scores
 from sklearn.svm import LinearSVC
 
 from modules import cleaner, tokenizer
-
-fold = 10
 
 def tweet_features(tweet):
     features = {}
@@ -33,29 +29,26 @@ def tweet_features(tweet):
 def f1(precision, recall):
     return 2 * ((precision * recall) / (precision + recall))
 
-with open(os.path.join(os.path.dirname(__file__), 'tweets_corpus/clean/distinct_traffic_tweets.csv'), newline='\n') as csv_input:
+with open('original.pkl', 'rb') as f:
+    svm_classifier = pickle.load(f)
+    print(type(svm_classifier))
+
+fold = 10
+
+with open(os.path.join(os.path.dirname(__file__), 'distinct_traffic_tweets.csv'), newline='\n') as csv_input:
     dataset = csv.reader(csv_input, delimiter=',', quotechar='"')
     traffic_tweets = [(line[0], line[1]) for line in dataset]
 
-with open(os.path.join(os.path.dirname(__file__), 'tweets_corpus/clean/distinct_non_traffic_tweets.csv'), newline='\n') as csv_input:
+with open(os.path.join(os.path.dirname(__file__), 'distinct_non_traffic_tweets.csv'), newline='\n') as csv_input:
     dataset = csv.reader(csv_input, delimiter=',', quotechar='"')
     non_traffic_tweets = [(line[0], line[1]) for line in dataset]
 
 random.shuffle(traffic_tweets)
 random.shuffle(non_traffic_tweets)
 
-if sys.argv[1] == "balance":
-    traffic_tweets = traffic_tweets[:min([len(traffic_tweets), len(non_traffic_tweets)])]
-    non_traffic_tweets = non_traffic_tweets[:min([len(traffic_tweets), len(non_traffic_tweets)])]
-
 labeled_tweets = (traffic_tweets + non_traffic_tweets)
 random.shuffle(labeled_tweets)
 
-print('Start analysis with total:', len(labeled_tweets), 'data')
-print('Traffic tweets:', len(traffic_tweets),'data')
-print('Non traffic tweets:', len(non_traffic_tweets),'data')
-
-times = []
 true_positives = []
 true_negatives = []
 false_positives = []
@@ -66,18 +59,9 @@ recalls = []
 f_measures = []
 
 for i in range(fold):
-    train_set = [(tweet_features(tweet), category) for (tweet, category) in labeled_tweets[0 : i * int(len(labeled_tweets) / fold)]] + \
-        [(tweet_features(tweet), category) for (tweet, category) in labeled_tweets[(i + 1) * int(len(labeled_tweets) / fold) : len(labeled_tweets)]]
     test_set = [(tweet_features(tweet), category) for (tweet, category) in labeled_tweets[i * int(len(labeled_tweets) / fold) : (i + 1) * int(len(labeled_tweets) / fold)]]
-
-    print('\nIteration', (i + 1))
-    print('Training data:', len(train_set), 'data')
-    print('Test data:', len(test_set), 'data')
-
+    
     # SVM
-    start_time = t.time()
-    svm_classifier = nltk.classify.SklearnClassifier(LinearSVC(max_iter=10000)).train(train_set)
-    time = round(t.time() - start_time, 2)
     accuracy = nltk.classify.accuracy(svm_classifier, test_set)
      
     true_positive = 0
@@ -99,7 +83,6 @@ for i in range(fold):
     recall = true_positive / (true_positive + false_negative)
     f_measure = f1(precision, recall)
 
-    times.append(time)
     true_positives.append(true_positive)
     true_negatives.append(true_negative)
     false_positives.append(false_positive)
@@ -110,7 +93,6 @@ for i in range(fold):
     f_measures.append(f_measure)
 
     print('SVM Classifier:')
-    print('\t', 'Training time:', time)    
     print('\t', 'True positive:', true_positive)
     print('\t', 'True negative:', true_negative)
     print('\t', 'False positive:', false_positive)
@@ -121,7 +103,6 @@ for i in range(fold):
     print('\t', 'F-Measure:', f_measure)
 
 print('\nSVM Classifier:')
-print('\tAverage training time:', sum(times) / len(times))
 print('\tAverage true positive:', sum(true_positives) / len(true_positives))
 print('\tAverage true negative:', sum(true_negatives) / len(true_negatives))
 print('\tAverage false positives:', sum(false_positives) / len(false_positives))
