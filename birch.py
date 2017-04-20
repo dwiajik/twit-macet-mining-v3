@@ -1,5 +1,6 @@
 import csv
 from os.path import dirname, join
+from random import shuffle
 
 from sklearn.cluster import Birch
 from sklearn.feature_extraction.text import CountVectorizer
@@ -13,10 +14,14 @@ with open(join(dirname(__file__), 'result/generated_datasets/traffic.csv'), newl
     traffic_tweets = [line[0] for line in dataset]
 
 print(len(traffic_tweets))
+shuffle(traffic_tweets)
+traffic_tweets = traffic_tweets[:1000]
+
 traffic_vectors = count_vect.fit_transform(traffic_tweets)
+print(traffic_vectors.shape)
 
 brc = Birch(branching_factor=50, n_clusters=None, threshold=2.5, compute_labels=True)
 brc.fit(traffic_vectors)
 # predicted = brc.predict(X)
 print(len(brc.subcluster_centers_))
-print(brc.subcluster_centers_[0])
+print(len(brc.subcluster_centers_[0]))
