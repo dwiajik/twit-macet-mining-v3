@@ -8,6 +8,7 @@ import numpy as np
 from sklearn.cluster import Birch
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.metrics import precision_recall_fscore_support
+from sklearn.model_selection import cross_val_score, StratifiedKFold
 from sklearn.svm import LinearSVC
 
 from modules.tokenizer import ngrams_tokenizer
@@ -27,6 +28,7 @@ calculations = [
 ]
 thresholds = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
 ngrams = 1
+cv = StratifiedKFold(n_splits=10, shuffle=True)
 
 print('PROGRESS: Loading datasets...')
 
@@ -37,15 +39,6 @@ with open(join(dirname(__file__), 'result/generated_datasets/traffic.csv'), newl
 with open(join(dirname(__file__), 'result/generated_datasets/non_traffic.csv'), newline='\n') as csv_input:
     dataset = csv.reader(csv_input, delimiter=',', quotechar='"')
     non_traffic_tweets = [line[0] for line in dataset]
-
-with open(join(dirname(__file__), 'tweets_corpus/test_set_10000.csv'), newline='\n') as csv_input:
-    dataset = csv.reader(csv_input, delimiter=',', quotechar='"')
-    dataset = [(line[0], line[1]) for line in dataset]
-    shuffle(dataset)
-    test = {
-        'data': [line[0] for line in dataset],
-        'target': [line[1] == 'traffic' for line in dataset],
-    }
 
 print('PROGRESS: Shuffling datasets...')
 
@@ -70,33 +63,33 @@ non_traffic_vectors = vectors[traffic_tweets_size:]
 print('\tTraffic data feature vector shape: {}'.format(traffic_vectors.shape))
 print('\tNon traffic data feature vector shape: {}'.format(non_traffic_vectors.shape))
 
-test_vectors = count_vect.transform(test['data'])
-print('\tTest data feature vector shape: {}'.format(test_vectors.shape))
-
-print('PROGRESS: Train SVM with all the data...')
+print('PROGRESS: Evaluate the SVM model using all data...')
 
 target = [True] * len(traffic_tweets) + [False] * len(non_traffic_tweets)
-clf.fit(vectors, target)
 
-print('PROGRESS: Evaluate the SVM model using test set...')
+scores = cross_val_score(clf, vectors, target, cv=cv)
+accuracy = scores.mean()
+print("\tAccuracy: {} (+/- {})".format(accuracy, scores.std() * 2))
 
-predicted = clf.predict(test_vectors)
-accuracy = np.mean(predicted == test['target'])
+scores = cross_val_score(clf, vectors, target, cv=cv, scoring='precision')
+precision = scores.mean()
+print("\tPrecision: {} (+/- {})".format(precision, scores.std() * 2))
 
-prfs = precision_recall_fscore_support(test['target'], predicted)
+scores = cross_val_score(clf, vectors, target, cv=cv, scoring='recall')
+recall = scores.mean()
+print("\tRecall: {} (+/- {})".format(recall, scores.std() * 2))
 
-# print('Training time: {}'.format(training_time))
-print('\tAccuracy: {}'.format(accuracy))
-print('\tPrecision: {}'.format(prfs[0][0]))
-print('\tRecall: {}'.format(prfs[1][0]))
-print('\tF-score: {}'.format(prfs[2][0]))
-with open(join(dirname(__file__), 'birch_eval.csv'), 'a', newline='\n') as csv_output:
+scores = cross_val_score(clf, vectors, target, cv=cv, scoring='f1')
+f1 = scores.mean()
+print("\tF1: {} (+/- {})".format(f1, scores.std() * 2))
+
+with open(join(dirname(__file__), 'birch_eval_10folds.csv'), 'a', newline='\n') as csv_output:
     csv_writer = csv.writer(csv_output, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-    csv_writer.writerow(('all', '', len(traffic_tweets), len(non_traffic_tweets), accuracy, prfs[0][0], prfs[1][0], prfs[2][0]))
+    csv_writer.writerow(('all', '', len(traffic_tweets), len(non_traffic_tweets), accuracy, precision, recall, f1))
 
 for th in [0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5]:
-    brc = Birch(branching_factor=50, n_clusters=None, threshold=th, compute_labels=True)
     print('PROGRESS: Clustering dataset...')
+    brc = Birch(branching_factor=50, n_clusters=None, threshold=th, compute_labels=True)
 
     brc.fit(traffic_vectors)
     traffic_vectors = brc.subcluster_centers_
@@ -111,25 +104,27 @@ for th in [0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5]:
 
     print('\tTotal centroid count: {}'.format(len(training_vectors)))
 
-    print('PROGRESS: Train SVM with cluster centroids...')
+    print('PROGRESS: Evaluate the SVM model using clustered data...')
 
-    clf.fit(training_vectors, training_target)
+    scores = cross_val_score(clf, training_vectors, training_target, cv=cv)
+    accuracy = scores.mean()
+    print("\tAccuracy: {} (+/- {})".format(accuracy, scores.std() * 2))
 
-    print('PROGRESS: Evaluate the SVM model using test set...')
+    scores = cross_val_score(clf, training_vectors, training_target, cv=cv, scoring='precision')
+    precision = scores.mean()
+    print("\tPrecision: {} (+/- {})".format(precision, scores.std() * 2))
 
-    predicted = clf.predict(test_vectors)
-    accuracy = np.mean(predicted == test['target'])
+    scores = cross_val_score(clf, training_vectors, training_target, cv=cv, scoring='recall')
+    recall = scores.mean()
+    print("\tRecall: {} (+/- {})".format(recall, scores.std() * 2))
 
-    prfs = precision_recall_fscore_support(test['target'], predicted)
-
-    # print('Training time: {}'.format(training_time))
-    print('\tAccuracy: {}'.format(accuracy))
-    print('\tPrecision: {}'.format(prfs[0][0]))
-    print('\tRecall: {}'.format(prfs[1][0]))
-    print('\tF-score: {}'.format(prfs[2][0]))
-    with open(join(dirname(__file__), 'birch_eval.csv'), 'a', newline='\n') as csv_output:
+    scores = cross_val_score(clf, training_vectors, training_target, cv=cv, scoring='f1')
+    f1 = scores.mean()
+    print("\tF1: {} (+/- {})".format(f1, scores.std() * 2))
+    
+    with open(join(dirname(__file__), 'birch_eval_10folds.csv'), 'a', newline='\n') as csv_output:
         csv_writer = csv.writer(csv_output, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        csv_writer.writerow(('birch', th, len(traffic_vectors), len(non_traffic_vectors), accuracy, prfs[0][0], prfs[1][0], prfs[2][0]))
+        csv_writer.writerow(('birch', th, len(traffic_vectors), len(non_traffic_vectors), accuracy, precision, recall, f1))
 
     brc = None
     gc.collect()
@@ -181,33 +176,32 @@ def calculate(calculation):
         training_vectors = count_vect.fit_transform(distinct_traffic_tweets + distinct_non_traffic_tweets)
         training_target = [True] * len(distinct_traffic_tweets) + [False] * len(distinct_non_traffic_tweets)
 
-        test_vectors = count_vect.transform(test['data'])
+        print('PROGRESS: Evaluate the SVM model...')
 
-        print('PROGRESS: Train SVM with reduced dataset using {} - {}...'.format(calculation.__class__.__name__, threshold))
+        scores = cross_val_score(clf, training_vectors, training_target, cv=cv)
+        accuracy = scores.mean()
+        print("\tAccuracy: {} (+/- {})".format(accuracy, scores.std() * 2))
 
-        clf.fit(training_vectors, training_target)
+        scores = cross_val_score(clf, training_vectors, training_target, cv=cv, scoring='precision')
+        precision = scores.mean()
+        print("\tPrecision: {} (+/- {})".format(precision, scores.std() * 2))
 
-        print('PROGRESS: Evaluate the SVM model using test set...')
+        scores = cross_val_score(clf, training_vectors, training_target, cv=cv, scoring='recall')
+        recall = scores.mean()
+        print("\tRecall: {} (+/- {})".format(recall, scores.std() * 2))
 
-        predicted = clf.predict(test_vectors)
-        accuracy = np.mean(predicted == test['target'])
+        scores = cross_val_score(clf, training_vectors, training_target, cv=cv, scoring='f1')
+        f1 = scores.mean()
+        print("\tF1: {} (+/- {})".format(f1, scores.std() * 2))
 
-        prfs = precision_recall_fscore_support(test['target'], predicted)
-
-        # print('Training time: {}'.format(training_time))
-        print('\tAccuracy: {}'.format(accuracy))
-        print('\tPrecision: {}'.format(prfs[0][0]))
-        print('\tRecall: {}'.format(prfs[1][0]))
-        print('\tF-score: {}'.format(prfs[2][0]))
-
-        r.append((calculation.__class__.__name__, threshold, len(distinct_traffic_tweets), len(distinct_non_traffic_tweets), accuracy, prfs[0][0], prfs[1][0], prfs[2][0]))
+        r.append((calculation.__class__.__name__, threshold, len(distinct_traffic_tweets), len(distinct_non_traffic_tweets), accuracy, precision, recall, f1))
 
     return r
 
 p = Pool(4)
 results = p.map(calculate, calculations)
 
-with open(join(dirname(__file__), 'birch_eval.csv'), 'a', newline='\n') as csv_output:
+with open(join(dirname(__file__), 'birch_eval_10folds.csv'), 'a', newline='\n') as csv_output:
     csv_writer = csv.writer(csv_output, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
     for result in results:
         for r in result:
