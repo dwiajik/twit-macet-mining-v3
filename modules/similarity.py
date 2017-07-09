@@ -80,36 +80,6 @@ class Dice:
         except ZeroDivisionError as e:
             return 1
 
-# the values are weird
-class Euclidean:
-    def index(self, a, b):
-        tokens, vec_a, vec_b = vector(a, b)
-        subtract = list(map(lambda token: abs(vec_a[token] - vec_b[token]), tokens))
-        sop = sum([e * e for e in subtract])
-        distance = sqrt(sop)
-        return 1 / (1 + distance)
-
-class Manhattan:
-    def index(self, a, b):
-        tokens, vec_a, vec_b = vector(a, b)
-        sum_of_subtract = sum(list(map(lambda token: abs(vec_a[token] - vec_b[token]), tokens)))
-        return sum_of_subtract
-        # try:
-        #     return 1 - (sum_of_subtract / len(tokens))
-        # except ZeroDivisionError as e:
-        #     return 1
-
-# complicated
-# http://simeon.wikia.com/wiki/Minkowski_distance
-class Minkowski:
-    def index(self, a, b):
-        return 0
-
-# not suitable
-class Matching:
-    def index(self, a, b):
-        return 0
-
 class Overlap:
     def intersect(self, a, b):
         return list(set(a) & set(b))
@@ -119,36 +89,3 @@ class Overlap:
             return len(self.intersect(a, b)) / min(len(a), len(b))
         except ZeroDivisionError as e:
             return 1
-
-# the values are weird
-class Pearson:
-    def index(self, a, b):
-        tokens, vec_a, vec_b = vector(a, b)
-        sop = sum(list(map(lambda token: vec_a[token] * vec_b[token], tokens)))
-        sum_of_a = sum([value for attr, value in vec_a.items()])
-        sum_of_b = sum([value for attr, value in vec_b.items()])
-        sum_of_square_a = sum([value * value for attr, value in vec_a.items()])
-        sum_of_square_b = sum([value * value for attr, value in vec_b.items()])
-        try:
-            numerator = sop - ((sum_of_a * sum_of_b) / len(tokens))
-            denominator = sqrt((sum_of_square_a - (sum_of_a ** 2 / len(tokens))) * (sum_of_square_b - (sum_of_b ** 2 / len(tokens))))
-            return numerator / denominator
-        except ZeroDivisionError as e:
-            return 1
-
-class Combination:
-    def __init__(self):
-        self.cosine = Cosine()
-        self.dice = Dice()
-        self.jaccard = Jaccard()
-        self.manhattan = Manhattan()
-        self.overlap = Overlap()
-
-    def index(self, a, b):
-        cosine = self.cosine.index(a, b)
-        dice = self.dice.index(a, b)
-        jaccard = self.jaccard.index(a, b)
-        manhattan = self.manhattan.index(a, b)
-        overlap = self.overlap.index(a, b)
-
-        return mean([cosine, dice, jaccard, manhattan, overlap])
